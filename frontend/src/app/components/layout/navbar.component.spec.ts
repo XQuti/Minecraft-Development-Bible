@@ -13,10 +13,9 @@ describe('NavbarComponent', () => {
     id: 1,
     email: 'test@example.com',
     username: 'testuser',
-    avatarUrl: null,
+    avatarUrl: undefined,
     provider: 'local',
-    roles: ['USER'],
-    createdAt: new Date()
+    roles: ['USER']
   };
 
   beforeEach(async () => {

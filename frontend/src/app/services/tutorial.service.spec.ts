@@ -11,7 +11,7 @@ describe('TutorialService', () => {
     id: 1,
     title: 'Getting Started',
     description: 'Learn the basics of Minecraft development',
-    orderIndex: 1,
+    order: 1,
     isPublished: true,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -23,9 +23,9 @@ describe('TutorialService', () => {
     title: 'Introduction to Minecraft Modding',
     content: 'This lesson covers the basics...',
     videoUrl: 'https://example.com/video1',
-    orderIndex: 1,
+    order: 1,
     isPublished: true,
-    moduleId: 1,
+    module: mockTutorialModule,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   };
@@ -112,10 +112,10 @@ describe('TutorialService', () => {
       service.getModuleLessons(moduleId).subscribe(lessons => {
         expect(lessons).toEqual(mockLessons);
         expect(lessons.length).toBe(1);
-        expect(lessons[0].moduleId).toBe(moduleId);
+        expect(lessons[0].module.id).toBe(moduleId);
       });
 
-      const req = httpMock.expectOne(`/api/tutorials/modules/${moduleId}/lessons`);
+      const req = httpMock.expectOne(`http://localhost:8080/api/tutorials/modules/${moduleId}/lessons`);
       expect(req.request.method).toBe('GET');
       req.flush(mockLessons);
     });
@@ -128,21 +128,21 @@ describe('TutorialService', () => {
         expect(lessons.length).toBe(0);
       });
 
-      const req = httpMock.expectOne(`/api/tutorials/modules/${moduleId}/lessons`);
+      const req = httpMock.expectOne(`http://localhost:8080/api/tutorials/modules/${moduleId}/lessons`);
       req.flush([]);
     });
   });
 
-  describe('getLessonById', () => {
+  describe('getLesson', () => {
     it('should fetch a specific lesson by ID', () => {
       const lessonId = 1;
 
-      service.getLessonById(lessonId).subscribe(lesson => {
+      service.getLesson(lessonId).subscribe(lesson => {
         expect(lesson).toEqual(mockTutorialLesson);
         expect(lesson.id).toBe(lessonId);
       });
 
-      const req = httpMock.expectOne(`/api/tutorials/lessons/${lessonId}`);
+      const req = httpMock.expectOne(`http://localhost:8080/api/tutorials/lessons/${lessonId}`);
       expect(req.request.method).toBe('GET');
       req.flush(mockTutorialLesson);
     });
@@ -150,54 +150,51 @@ describe('TutorialService', () => {
     it('should handle 404 error for non-existent lesson', () => {
       const lessonId = 999;
 
-      service.getLessonById(lessonId).subscribe({
+      service.getLesson(lessonId).subscribe({
         next: () => fail('should have failed'),
         error: (error) => {
-          expect(error.status).toBe(404);
+          expect(error.message).toContain('Tutorial content not found');
         }
       });
 
-      const req = httpMock.expectOne(`/api/tutorials/lessons/${lessonId}`);
+      const req = httpMock.expectOne(`http://localhost:8080/api/tutorials/lessons/${lessonId}`);
       req.flush('Lesson not found', { status: 404, statusText: 'Not Found' });
     });
   });
 
-  describe('searchModules', () => {
-    it('should search modules by query', () => {
-      const query = 'getting started';
-      const mockSearchResults = [mockTutorialModule];
-
-      service.searchModules(query).subscribe(modules => {
-        expect(modules).toEqual(mockSearchResults);
-        expect(modules.length).toBe(1);
+  describe('error handling', () => {
+    it('should handle network errors', () => {
+      service.getModules().subscribe({
+        next: () => fail('should have failed'),
+        error: (error) => {
+          expect(error.message).toContain('Network error');
+        }
       });
 
-      const req = httpMock.expectOne(`/api/tutorials/modules/search?q=${encodeURIComponent(query)}`);
-      expect(req.request.method).toBe('GET');
-      req.flush(mockSearchResults);
+      const req = httpMock.expectOne('http://localhost:8080/api/tutorials/modules');
+      req.error(new ErrorEvent('Network error'));
     });
 
-    it('should handle empty search results', () => {
-      const query = 'nonexistent';
-
-      service.searchModules(query).subscribe(modules => {
-        expect(modules).toEqual([]);
-        expect(modules.length).toBe(0);
+    it('should handle server errors', () => {
+      service.getModules().subscribe({
+        next: () => fail('should have failed'),
+        error: (error) => {
+          expect(error.message).toContain('Server error');
+        }
       });
 
-      const req = httpMock.expectOne(`/api/tutorials/modules/search?q=${encodeURIComponent(query)}`);
-      req.flush([]);
+      const req = httpMock.expectOne('http://localhost:8080/api/tutorials/modules');
+      req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
     });
 
-    it('should handle empty query', () => {
-      const query = '';
+    it('should throw error for invalid module ID', () => {
+      expect(() => service.getModule(0)).toThrowError('Invalid module ID');
+      expect(() => service.getModule(-1)).toThrowError('Invalid module ID');
+    });
 
-      service.searchModules(query).subscribe(modules => {
-        expect(modules).toEqual([]);
-      });
-
-      const req = httpMock.expectOne(`/api/tutorials/modules/search?q=`);
-      req.flush([]);
+    it('should throw error for invalid lesson ID', () => {
+      expect(() => service.getLesson(0)).toThrowError('Invalid lesson ID');
+      expect(() => service.getLesson(-1)).toThrowError('Invalid lesson ID');
     });
   });
 });

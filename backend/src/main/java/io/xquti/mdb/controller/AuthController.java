@@ -26,8 +26,13 @@ public class AuthController {
     private UserService userService;
 
     @GetMapping("/me")
-    public ResponseEntity<UserDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<UserDto> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         logger.debug("Getting current user from token");
+        
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            logger.warn("Missing or invalid Authorization header");
+            return ResponseEntity.status(401).build();
+        }
         
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix

@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -53,14 +54,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/forums/threads/*/posts").permitAll()
                 .requestMatchers("/oauth2/**", "/login/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                // Protected endpoints - require authentication
-                .requestMatchers("/api/auth/me").authenticated()
-                .requestMatchers("/api/auth/logout").authenticated()
+                // Auth endpoints - handle authentication internally
+                .requestMatchers("/api/auth/me").permitAll()
+                .requestMatchers("/api/auth/logout").permitAll()
                 // Forum write operations require authentication
-                .requestMatchers("POST", "/api/forums/threads").authenticated()
-                .requestMatchers("POST", "/api/forums/threads/*/posts").authenticated()
-                .requestMatchers("PUT", "/api/forums/**").authenticated()
-                .requestMatchers("DELETE", "/api/forums/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/forums/threads").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/forums/threads/*/posts").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/forums/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/forums/**").authenticated()
                 // Admin endpoints (if any) would require ADMIN role
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // All other requests require authentication
@@ -149,8 +150,10 @@ public class SecurityConfig {
                         if (jwtService.validateToken(token, username)) {
                             logger.debug("JWT token validated successfully for user: " + username);
                             // Create authentication token and set in security context
-                            // For simplicity, we're using a basic implementation
-                            // In production, you'd want to create a proper Authentication object
+                            org.springframework.security.authentication.UsernamePasswordAuthenticationToken authToken = 
+                                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                                    username, null, java.util.Collections.emptyList());
+                            SecurityContextHolder.getContext().setAuthentication(authToken);
                         }
                     } catch (Exception e) {
                         logger.debug("JWT token validation failed for user: " + username + " - error: " + e.getMessage());

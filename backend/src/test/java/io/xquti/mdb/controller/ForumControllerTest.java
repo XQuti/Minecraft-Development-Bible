@@ -52,6 +52,14 @@ class ForumControllerTest {
 
     private ForumThreadDto testThreadDto;
     private ForumPostDto testPostDto;
+    
+    private io.xquti.mdb.dto.UserDto createTestUserDto() {
+        io.xquti.mdb.dto.UserDto userDto = new io.xquti.mdb.dto.UserDto();
+        userDto.setId(1L);
+        userDto.setEmail("test@example.com");
+        userDto.setUsername("testuser");
+        return userDto;
+    }
 
     @BeforeEach
     void setUp() {
@@ -112,22 +120,28 @@ class ForumControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "test@example.com")
     void createThread_WithValidData_ShouldCreateThread() throws Exception {
         // Arrange
         ForumController.CreateThreadRequest request = new ForumController.CreateThreadRequest();
         request.setTitle("New Thread");
         request.setContent("Thread content");
-
+        
+        String token = "valid-jwt-token";
+        String email = "test@example.com";
+        
+        when(jwtService.extractUsername(token)).thenReturn(email);
+        when(jwtService.validateToken(token, email)).thenReturn(true);
+        when(userService.findByEmailDto(email)).thenReturn(createTestUserDto());
         when(forumService.createThread(eq("New Thread"), eq("Thread content"), eq(1L)))
                 .thenReturn(testThreadDto);
 
         // Act & Assert
         mockMvc.perform(post("/api/forums/threads")
+                .header("Authorization", "Bearer valid-jwt-token")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Test Thread"))
@@ -183,22 +197,28 @@ class ForumControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "test@example.com")
     void createPost_WithValidData_ShouldCreatePost() throws Exception {
         // Arrange
         Long threadId = 1L;
         ForumController.CreatePostRequest request = new ForumController.CreatePostRequest();
         request.setContent("New post content");
-
+        
+        String token = "valid-jwt-token";
+        String email = "test@example.com";
+        
+        when(jwtService.extractUsername(token)).thenReturn(email);
+        when(jwtService.validateToken(token, email)).thenReturn(true);
+        when(userService.findByEmailDto(email)).thenReturn(createTestUserDto());
         when(forumService.createPost(eq(threadId), eq("New post content"), eq(1L)))
                 .thenReturn(testPostDto);
 
         // Act & Assert
         mockMvc.perform(post("/api/forums/threads/{threadId}/posts", threadId)
+                .header("Authorization", "Bearer " + token)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.content").value("Test post content"));

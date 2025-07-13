@@ -11,10 +11,9 @@ describe('AuthService', () => {
     id: 1,
     email: 'test@example.com',
     username: 'testuser',
-    avatarUrl: null,
+    avatarUrl: undefined,
     provider: 'local',
-    roles: ['USER'],
-    createdAt: new Date()
+    roles: ['USER']
   };
 
   const mockAuthResponse = {
@@ -46,16 +45,15 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should redirect to OAuth provider', () => {
       // Mock window.location.href
-      const originalLocation = window.location;
-      delete (window as any).location;
-      window.location = { ...originalLocation, href: '' };
+      const mockLocation = { href: '' };
+      Object.defineProperty(window, 'location', {
+        value: mockLocation,
+        writable: true
+      });
 
       service.login('google');
 
-      expect(window.location.href).toBe('http://localhost:8080/oauth2/authorization/google');
-
-      // Restore original location
-      window.location = originalLocation;
+      expect(mockLocation.href).toBe('http://localhost:8080/oauth2/authorization/google');
     });
 
     it('should handle invalid provider', () => {

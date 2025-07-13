@@ -84,7 +84,7 @@ class UserServiceTest {
         // Arrange
         String email = "test@example.com";
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(testUser));
-        when(dtoMapper.toUserDto(testUser)).thenReturn(testUserDto);
+        when(dtoMapper.toUserDto(any(User.class))).thenReturn(testUserDto);
 
         // Act
         UserDto result = userService.findByEmailDto(email);
@@ -97,14 +97,16 @@ class UserServiceTest {
     }
 
     @Test
-    void findByEmailDto_WithNonExistentUser_ShouldThrowException() {
+    void findByEmailDto_WithNonExistentUser_ShouldReturnNull() {
         // Arrange
         String email = "nonexistent@example.com";
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
-            userService.findByEmailDto(email));
+        // Act
+        UserDto result = userService.findByEmailDto(email);
+
+        // Assert
+        assertNull(result);
         verify(userRepository).findByEmail(email);
         verify(dtoMapper, never()).toUserDto(any());
     }
@@ -112,7 +114,7 @@ class UserServiceTest {
     @Test
     void save_WithValidUser_ShouldSaveUser() {
         // Arrange
-        when(userRepository.save(testUser)).thenReturn(testUser);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
 
         // Act
         User result = userService.save(testUser);

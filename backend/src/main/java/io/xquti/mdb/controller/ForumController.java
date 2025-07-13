@@ -69,7 +69,7 @@ public class ForumController {
     })
     public ResponseEntity<ForumThreadDto> createThread(
             @Parameter(description = "Thread creation request") @Valid @RequestBody CreateThreadRequest request,
-            @Parameter(description = "JWT authorization header") @RequestHeader("Authorization") String authHeader) {
+            @Parameter(description = "JWT authorization header") @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
         logger.debug("Creating new forum thread: {}", request.getTitle());
         
@@ -134,7 +134,7 @@ public class ForumController {
     public ResponseEntity<ForumPostDto> createPost(
             @Parameter(description = "Thread ID") @PathVariable Long threadId,
             @Parameter(description = "Post creation request") @Valid @RequestBody CreatePostRequest request,
-            @Parameter(description = "JWT authorization header") @RequestHeader("Authorization") String authHeader) {
+            @Parameter(description = "JWT authorization header") @RequestHeader(value = "Authorization", required = false) String authHeader) {
         
         logger.debug("Creating post in thread: {}", threadId);
         
@@ -155,6 +155,11 @@ public class ForumController {
     }
 
     private UserDto getCurrentUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            logger.debug("Missing or invalid Authorization header");
+            return null;
+        }
+        
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             String email = jwtService.extractUsername(token);

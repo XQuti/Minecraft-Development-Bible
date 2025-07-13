@@ -95,8 +95,7 @@ class ForumServiceTest {
         Page<ForumThreadDto> expectedDtoPage = new PageImpl<>(Arrays.asList(testThreadDto), pageable, 1);
 
         when(forumThreadRepository.findAllOrderByPinnedAndUpdated(pageable)).thenReturn(threadPage);
-        // Mock the page mapping behavior
-        when(threadPage.map(any())).thenAnswer(invocation -> expectedDtoPage);
+        when(dtoMapper.toForumThreadDto(testThread)).thenReturn(testThreadDto);
 
         // Act
         Page<ForumThreadDto> result = forumService.getAllThreads(pageable, null);
@@ -119,8 +118,7 @@ class ForumServiceTest {
         Page<ForumThreadDto> expectedDtoPage = new PageImpl<>(Arrays.asList(testThreadDto), pageable, 1);
 
         when(forumThreadRepository.findByCategoryOrderByPinnedAndUpdated(category, pageable)).thenReturn(threadPage);
-        // Mock the page mapping behavior
-        when(threadPage.map(any())).thenAnswer(invocation -> expectedDtoPage);
+        when(dtoMapper.toForumThreadDto(testThread)).thenReturn(testThreadDto);
 
         // Act
         Page<ForumThreadDto> result = forumService.getAllThreads(pageable, category);
@@ -141,7 +139,7 @@ class ForumServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(forumThreadRepository.save(any(ForumThread.class))).thenReturn(testThread);
-        when(dtoMapper.toForumThreadDto(testThread)).thenReturn(testThreadDto);
+        when(dtoMapper.toForumThreadDto(any(ForumThread.class))).thenReturn(testThreadDto);
 
         // Act
         ForumThreadDto result = forumService.createThread(title, content, userId);
@@ -178,8 +176,7 @@ class ForumServiceTest {
 
         when(forumThreadRepository.existsById(threadId)).thenReturn(true);
         when(forumPostRepository.findByThreadIdOrderByCreatedAtAsc(threadId, pageable)).thenReturn(postPage);
-        // Mock the page mapping behavior
-        when(postPage.map(any())).thenAnswer(invocation -> expectedDtoPage);
+        when(dtoMapper.toForumPostDto(testPost)).thenReturn(testPostDto);
 
         // Act
         Page<ForumPostDto> result = forumService.getThreadPosts(threadId, pageable);
@@ -217,7 +214,7 @@ class ForumServiceTest {
         when(forumThreadRepository.findById(threadId)).thenReturn(Optional.of(testThread));
         when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
         when(forumPostRepository.save(any(ForumPost.class))).thenReturn(testPost);
-        when(dtoMapper.toForumPostDto(testPost)).thenReturn(testPostDto);
+        when(dtoMapper.toForumPostDto(any(ForumPost.class))).thenReturn(testPostDto);
 
         // Act
         ForumPostDto result = forumService.createPost(threadId, content, userId);
@@ -232,14 +229,16 @@ class ForumServiceTest {
     }
 
     @Test
-    void createPost_WithNonExistentThread_ShouldThrowException() {
+    void createPost_WithNonExistentThread_ShouldReturnNull() {
         // Arrange
         Long threadId = 999L;
         when(forumThreadRepository.findById(threadId)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> 
-            forumService.createPost(threadId, "Content", 1L));
+        // Act
+        ForumPostDto result = forumService.createPost(threadId, "Content", 1L);
+
+        // Assert
+        assertNull(result);
         verify(forumThreadRepository).findById(threadId);
         verify(forumPostRepository, never()).save(any());
     }

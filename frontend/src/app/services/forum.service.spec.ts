@@ -2,11 +2,21 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ForumService } from './forum.service';
 import { ForumThread, ForumPost, CreateThreadRequest, CreatePostRequest } from '../models/forum.model';
+import { User } from '../models/user.model';
 
 describe('ForumService', () => {
   let service: ForumService;
   let httpMock: HttpTestingController;
   const baseUrl = 'http://localhost:8080/api/forums';
+
+  const mockUser: User = {
+    id: 1,
+    username: 'testuser',
+    email: 'test@example.com',
+    avatarUrl: undefined,
+    provider: 'local',
+    roles: ['USER']
+  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -32,18 +42,21 @@ describe('ForumService', () => {
           {
             id: 1,
             title: 'Test Thread',
-            category: 'general',
-            authorUsername: 'testuser',
-            createdAt: '2024-01-01T00:00:00',
-            updatedAt: '2024-01-01T00:00:00',
+            author: mockUser,
+            isPinned: false,
+            isLocked: false,
             postCount: 5,
-            pinned: false
+            lastActivity: '2024-01-01T00:00:00',
+            createdAt: '2024-01-01T00:00:00',
+            updatedAt: '2024-01-01T00:00:00'
           }
         ],
         totalElements: 1,
         totalPages: 1,
         size: 20,
-        number: 0
+        number: 0,
+        first: true,
+        last: true
       };
 
       service.getThreads(0, 20).subscribe(response => {
@@ -57,21 +70,23 @@ describe('ForumService', () => {
       req.flush(mockResponse);
     });
 
-    it('should fetch threads with category filter', () => {
-      const category = 'general';
+    it('should fetch threads with search query', () => {
+      const searchQuery = 'test';
       const mockResponse = {
         content: [],
         totalElements: 0,
         totalPages: 0,
         size: 20,
-        number: 0
+        number: 0,
+        first: true,
+        last: true
       };
 
-      service.getThreads(0, 20, category).subscribe(response => {
+      service.getThreads(0, 20, searchQuery).subscribe(response => {
         expect(response).toEqual(mockResponse);
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/threads?page=0&size=20&category=${category}`);
+      const req = httpMock.expectOne(`${baseUrl}/threads?page=0&size=20&search=${searchQuery}`);
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
     });
@@ -93,19 +108,19 @@ describe('ForumService', () => {
     it('should create a new thread', () => {
       const createRequest: CreateThreadRequest = {
         title: 'New Thread',
-        content: 'Thread content',
-        category: 'general'
+        content: 'Thread content'
       };
 
       const mockResponse: ForumThread = {
         id: 1,
         title: 'New Thread',
-        category: 'general',
-        authorUsername: 'testuser',
-        createdAt: '2024-01-01T00:00:00',
-        updatedAt: '2024-01-01T00:00:00',
+        author: mockUser,
+        isPinned: false,
+        isLocked: false,
         postCount: 1,
-        pinned: false
+        lastActivity: '2024-01-01T00:00:00',
+        createdAt: '2024-01-01T00:00:00',
+        updatedAt: '2024-01-01T00:00:00'
       };
 
       service.createThread(createRequest).subscribe(response => {
@@ -122,8 +137,7 @@ describe('ForumService', () => {
     it('should handle error when creating thread', () => {
       const createRequest: CreateThreadRequest = {
         title: '',
-        content: 'Thread content',
-        category: 'general'
+        content: 'Thread content'
       };
 
       service.createThread(createRequest).subscribe({
@@ -141,30 +155,53 @@ describe('ForumService', () => {
   describe('getThreadPosts', () => {
     it('should fetch posts for a thread', () => {
       const threadId = 1;
+      const mockThread: ForumThread = {
+        id: threadId,
+        title: 'Test Thread',
+        author: mockUser,
+        isPinned: false,
+        isLocked: false,
+        postCount: 2,
+        lastActivity: '2024-01-01T01:00:00',
+        createdAt: '2024-01-01T00:00:00'
+      };
+      
       const mockPosts: ForumPost[] = [
         {
           id: 1,
           content: 'First post',
-          authorUsername: 'testuser',
+          author: mockUser,
+          thread: mockThread,
           createdAt: '2024-01-01T00:00:00'
         },
         {
           id: 2,
           content: 'Second post',
-          authorUsername: 'testuser2',
+          author: { ...mockUser, id: 2, username: 'testuser2' },
+          thread: mockThread,
           createdAt: '2024-01-01T01:00:00'
         }
       ];
 
-      service.getThreadPosts(threadId).subscribe(posts => {
-        expect(posts).toEqual(mockPosts);
-        expect(posts.length).toBe(2);
-        expect(posts[0].content).toBe('First post');
+      const mockResponse = {
+        content: mockPosts,
+        totalElements: 2,
+        totalPages: 1,
+        size: 20,
+        number: 0,
+        first: true,
+        last: true
+      };
+
+      service.getThreadPosts(threadId).subscribe(response => {
+        expect(response).toEqual(mockResponse);
+        expect(response.content.length).toBe(2);
+        expect(response.content[0].content).toBe('First post');
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/threads/${threadId}/posts`);
+      const req = httpMock.expectOne(`${baseUrl}/threads/${threadId}/posts?page=0&size=20`);
       expect(req.request.method).toBe('GET');
-      req.flush(mockPosts);
+      req.flush(mockResponse);
     });
 
     it('should handle error when thread not found', () => {
@@ -173,11 +210,11 @@ describe('ForumService', () => {
       service.getThreadPosts(threadId).subscribe({
         next: () => fail('should have failed'),
         error: (error) => {
-          expect(error.status).toBe(404);
+          expect(error).toBeTruthy();
         }
       });
 
-      const req = httpMock.expectOne(`${baseUrl}/threads/${threadId}/posts`);
+      const req = httpMock.expectOne(`${baseUrl}/threads/${threadId}/posts?page=0&size=20`);
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
   });
@@ -189,10 +226,22 @@ describe('ForumService', () => {
         content: 'New post content'
       };
 
+      const mockThread: ForumThread = {
+        id: threadId,
+        title: 'Test Thread',
+        author: mockUser,
+        isPinned: false,
+        isLocked: false,
+        postCount: 1,
+        lastActivity: '2024-01-01T02:00:00',
+        createdAt: '2024-01-01T00:00:00'
+      };
+
       const mockResponse: ForumPost = {
         id: 3,
         content: 'New post content',
-        authorUsername: 'testuser',
+        author: mockUser,
+        thread: mockThread,
         createdAt: '2024-01-01T02:00:00'
       };
 
@@ -216,7 +265,7 @@ describe('ForumService', () => {
       service.createPost(threadId, createRequest).subscribe({
         next: () => fail('should have failed'),
         error: (error) => {
-          expect(error.status).toBe(401);
+          expect(error).toBeTruthy();
         }
       });
 

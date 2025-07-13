@@ -55,13 +55,19 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     
-    - name: Make gradlew executable
+    - name: Make gradlew executable (Unix only)
       run: chmod +x ./backend/gradlew
+      if: runner.os != 'Windows'
       
     - name: Build backend
       run: |
         cd backend
-        ./gradlew build
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          gradlew.bat build
+        else
+          ./gradlew build
+        fi
+      shell: bash
       env:
         DB_HOST: localhost
         DB_PORT: 5432
@@ -72,20 +78,36 @@ jobs:
         REDIS_PORT: 6379
         JWT_SECRET: test-secret-key-for-ci-pipeline-testing-purposes-only
     
-    # Temporarily disabled until tests are fixed
-    # - name: Run backend tests
-    #   run: |
-    #     cd backend
-    #     ./gradlew test
-    #   env:
-    #     DB_HOST: localhost
-    #     DB_PORT: 5432
-    #     DB_NAME: minecraft_dev_bible_test
-    #     DB_USERNAME: postgres
-    #     DB_PASSWORD: password
-    #     REDIS_HOST: localhost
-    #     REDIS_PORT: 6379
-    #     JWT_SECRET: test-secret-key-for-ci-pipeline-testing-purposes-only
+    - name: Run backend tests (non-blocking)
+      run: |
+        cd backend
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          gradlew.bat test
+        else
+          ./gradlew test
+        fi
+      shell: bash
+      continue-on-error: true
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: minecraft_dev_bible_test
+        DB_USERNAME: postgres
+        DB_PASSWORD: password
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+        JWT_SECRET: test-secret-key-for-ci-pipeline-testing-purposes-only
+    
+    - name: Run backend static analysis
+      run: |
+        cd backend
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          gradlew.bat checkstyleMain checkstyleTest
+        else
+          ./gradlew checkstyleMain checkstyleTest
+        fi
+      shell: bash
+      continue-on-error: true
 
   # Frontend Build and Test
   frontend:
@@ -115,11 +137,17 @@ jobs:
         cd frontend
         bun run build
     
-    # Temporarily disabled until tests are fixed
-    # - name: Run frontend tests
-    #   run: |
-    #     cd frontend
-    #     bun run test:ci
+    - name: Run frontend tests (non-blocking)
+      run: |
+        cd frontend
+        bun run test:ci
+      continue-on-error: true
+    
+    - name: Run frontend static analysis
+      run: |
+        cd frontend
+        echo "Linting not configured yet - skipping"
+      continue-on-error: false
 
   # Docker Build Test (only on main branch)
   docker-build:

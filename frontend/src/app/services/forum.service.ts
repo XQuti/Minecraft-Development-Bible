@@ -35,7 +35,8 @@ export class ForumService {
       retry(1),
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching forum threads:', error);
-        return this.authService.handleApiError(error);
+        // Return a user-friendly error message
+        throw new Error('Could not load forum threads. Please try again later.');
       })
     );
   }
@@ -50,7 +51,7 @@ export class ForumService {
       retry(1),
       catchError((error: HttpErrorResponse) => {
         console.error(`Error fetching thread ${threadId}:`, error);
-        return this.authService.handleApiError(error);
+        throw new Error('Could not load thread. Please try again later.');
       })
     );
   }
@@ -72,7 +73,7 @@ export class ForumService {
         timeout(this.REQUEST_TIMEOUT),
         catchError((error: HttpErrorResponse) => {
           console.error('Error creating forum thread:', error);
-          return this.authService.handleApiError(error);
+          throw new Error('Could not create thread. Please try again later.');
         })
       );
     } catch (error) {
@@ -99,7 +100,7 @@ export class ForumService {
       retry(1),
       catchError((error: HttpErrorResponse) => {
         console.error(`Error fetching posts for thread ${threadId}:`, error);
-        return this.authService.handleApiError(error);
+        throw new Error('Could not load thread posts. Please try again later.');
       })
     );
   }
@@ -124,7 +125,7 @@ export class ForumService {
         timeout(this.REQUEST_TIMEOUT),
         catchError((error: HttpErrorResponse) => {
           console.error(`Error creating post in thread ${threadId}:`, error);
-          return this.authService.handleApiError(error);
+          throw new Error('Could not create post. Please try again later.');
         })
       );
     } catch (error) {

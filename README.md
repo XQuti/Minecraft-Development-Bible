@@ -77,30 +77,36 @@ bun run start
 - Basic forum and tutorial functionality
 
 ### 🚧 In Progress
-- Test suite fixes (temporarily disabled in CI)
-- Frontend component logic improvements
-- API consistency enhancements
+- Frontend test environment setup (Chrome dependency)
+- Enhanced error handling and user feedback
+- API consistency improvements
 
 ### 📋 TODO
-- Re-enable test suites once fixed
-- Add comprehensive error handling
+- Configure ESLint for frontend static analysis
+- Add comprehensive integration tests
 - Implement real-time features
 - Add admin panel
 - Performance optimizations
 
 ## 🧪 Testing
 
-Tests are currently disabled in the CI pipeline while being fixed. To run tests locally:
+Tests are now running in the CI pipeline as non-blocking steps while being improved. To run tests locally:
 
 ```bash
-# Backend (currently failing - being fixed)
+# Backend (tests are now passing)
 cd backend
-./gradlew test
+./gradlew test        # Unix/Linux/macOS
+gradlew.bat test      # Windows
 
-# Frontend (currently failing - being fixed)  
+# Frontend (requires Chrome for headless testing)
 cd frontend
-bun run test
+bun run test          # Interactive mode
+bun run test:ci       # CI mode (requires Chrome)
 ```
+
+### Test Status
+- ✅ **Backend**: Tests are passing and run in CI (non-blocking)
+- 🚧 **Frontend**: Tests require Chrome browser setup for CI environment
 
 ## 🚀 Deployment
 

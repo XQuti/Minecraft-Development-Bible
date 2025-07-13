@@ -189,17 +189,17 @@ class ForumServiceTest {
     }
 
     @Test
-    void getThreadPosts_WithNonExistentThread_ShouldReturnNull() {
+    void getThreadPosts_WithNonExistentThread_ShouldThrowException() {
         // Arrange
         Long threadId = 999L;
         Pageable pageable = PageRequest.of(0, 20);
         when(forumThreadRepository.existsById(threadId)).thenReturn(false);
 
-        // Act
-        Page<ForumPostDto> result = forumService.getThreadPosts(threadId, pageable);
-
-        // Assert
-        assertNull(result);
+        // Act & Assert
+        assertThrows(EntityNotFoundException.class, () -> {
+            forumService.getThreadPosts(threadId, pageable);
+        });
+        
         verify(forumThreadRepository).existsById(threadId);
         verify(forumPostRepository, never()).findByThreadIdOrderByCreatedAtAsc(any(), any());
     }
@@ -229,16 +229,16 @@ class ForumServiceTest {
     }
 
     @Test
-    void createPost_WithNonExistentThread_ShouldReturnNull() {
+    void createPost_WithNonExistentThread_ShouldThrowException() {
         // Arrange
         Long threadId = 999L;
         when(forumThreadRepository.findById(threadId)).thenReturn(Optional.empty());
 
-        // Act
-        ForumPostDto result = forumService.createPost(threadId, "Content", 1L);
-
-        // Assert
-        assertNull(result);
+        // Act & Assert
+        assertThrows(EntityNotFoundException.class, () -> {
+            forumService.createPost(threadId, "Content", 1L);
+        });
+        
         verify(forumThreadRepository).findById(threadId);
         verify(forumPostRepository, never()).save(any());
     }

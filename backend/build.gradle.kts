@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.1"
     id("io.spring.dependency-management") version "1.1.7"
+    checkstyle
 }
 
 group = "io.xquti"
@@ -69,4 +70,19 @@ tasks.withType<Test> {
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.add("-Xlint:deprecation")
+}
+
+checkstyle {
+    toolVersion = "10.12.4"
+    configFile = file("config/checkstyle/checkstyle.xml")
+}
+
+tasks.named("checkstyleMain") {
+    group = "verification"
+    description = "Run Checkstyle analysis for main source set"
+}
+
+tasks.named("checkstyleTest") {
+    group = "verification"
+    description = "Run Checkstyle analysis for test source set"
 }

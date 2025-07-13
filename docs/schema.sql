@@ -81,7 +81,9 @@ CREATE INDEX idx_forum_posts_thread ON forum_posts(thread_id, created_at ASC);
 
 -- Additional indexes for foreign key columns to improve query performance
 CREATE INDEX idx_forum_threads_author_id ON forum_threads(author_id);
+CREATE INDEX idx_forum_posts_thread_id ON forum_posts(thread_id);
 CREATE INDEX idx_forum_posts_author_id ON forum_posts(author_id);
+CREATE INDEX idx_tutorial_lessons_module_id ON tutorial_lessons(module_id);
 
 -- Sample data for development
 INSERT INTO tutorial_modules (title, description, display_order) VALUES

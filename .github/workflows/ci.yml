@@ -78,7 +78,7 @@ jobs:
         REDIS_PORT: 6379
         JWT_SECRET: test-secret-key-for-ci-pipeline-testing-purposes-only
     
-    - name: Run backend tests (non-blocking)
+    - name: Run backend tests
       run: |
         cd backend
         if [ "$RUNNER_OS" == "Windows" ]; then
@@ -87,7 +87,6 @@ jobs:
           ./gradlew test
         fi
       shell: bash
-      continue-on-error: true
       env:
         DB_HOST: localhost
         DB_PORT: 5432
@@ -107,7 +106,6 @@ jobs:
           ./gradlew checkstyleMain checkstyleTest
         fi
       shell: bash
-      continue-on-error: true
 
   # Frontend Build and Test
   frontend:
@@ -137,11 +135,10 @@ jobs:
         cd frontend
         bun run build
     
-    - name: Run frontend tests (non-blocking)
+    - name: Run frontend tests
       run: |
         cd frontend
         bun run test:ci
-      continue-on-error: true
     
     - name: Run frontend static analysis
       run: |

@@ -20,7 +20,7 @@ A comprehensive platform for Minecraft plugin development tutorials, community f
 2. **Configure environment variables**
    ```bash
    cp .env.example .env
-   # Edit .env with your OAuth2 credentials
+   # Edit .env with your OAuth2 credentials and other configuration
    ```
 
 3. **Start the application**
@@ -90,7 +90,7 @@ bun run start
 
 ## 🧪 Testing
 
-Tests are now running in the CI pipeline as non-blocking steps while being improved. To run tests locally:
+Tests are now running in the CI pipeline and will fail the build if they don't pass. To run tests locally:
 
 ```bash
 # Backend (tests are now passing)
@@ -105,7 +105,7 @@ bun run test:ci       # CI mode (requires Chrome)
 ```
 
 ### Test Status
-- ✅ **Backend**: Tests are passing and run in CI (non-blocking)
+- ✅ **Backend**: Tests are passing and run in CI (blocking)
 - 🚧 **Frontend**: Tests require Chrome browser setup for CI environment
 
 ## 🚀 Deployment

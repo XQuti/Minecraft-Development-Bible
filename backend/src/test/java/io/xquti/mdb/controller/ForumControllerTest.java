@@ -2,9 +2,9 @@ package io.xquti.mdb.controller;
 
 import io.xquti.mdb.dto.ForumPostDto;
 import io.xquti.mdb.dto.ForumThreadDto;
+import io.xquti.mdb.dto.UserDto;
 import io.xquti.mdb.service.ForumService;
-import io.xquti.mdb.service.JwtService;
-import io.xquti.mdb.service.UserService;
+import io.xquti.mdb.util.AuthUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +19,11 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 import io.xquti.mdb.config.SecurityConfig;
 
 import java.time.LocalDateTime;
@@ -27,13 +32,26 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import org.mockito.Mockito;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ForumController.class)
-@Import({SecurityConfig.class})
+@Import(ForumControllerTest.TestSecurityConfig.class)
 class ForumControllerTest {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        @Primary
+        public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
+            http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+            return http.build();
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,10 +60,7 @@ class ForumControllerTest {
     private ForumService forumService;
 
     @MockBean
-    private JwtService jwtService;
-
-    @MockBean
-    private UserService userService;
+    private AuthUtils authUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -129,9 +144,7 @@ class ForumControllerTest {
         String token = "valid-jwt-token";
         String email = "test@example.com";
         
-        when(jwtService.extractUsername(token)).thenReturn(email);
-        when(jwtService.validateToken(token, email)).thenReturn(true);
-        when(userService.findByEmailDto(email)).thenReturn(createTestUserDto());
+        when(authUtils.getCurrentUser("Bearer " + token)).thenReturn(createTestUserDto());
         when(forumService.createThread(eq("New Thread"), eq("Thread content"), eq(1L)))
                 .thenReturn(testThreadDto);
 
@@ -154,6 +167,8 @@ class ForumControllerTest {
         ForumController.CreateThreadRequest request = new ForumController.CreateThreadRequest();
         request.setTitle("New Thread");
         request.setContent("Thread content");
+        
+        when(authUtils.getCurrentUser(null)).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(post("/api/forums/threads")
@@ -206,9 +221,7 @@ class ForumControllerTest {
         String token = "valid-jwt-token";
         String email = "test@example.com";
         
-        when(jwtService.extractUsername(token)).thenReturn(email);
-        when(jwtService.validateToken(token, email)).thenReturn(true);
-        when(userService.findByEmailDto(email)).thenReturn(createTestUserDto());
+        when(authUtils.getCurrentUser("Bearer " + token)).thenReturn(createTestUserDto());
         when(forumService.createPost(eq(threadId), eq("New post content"), eq(1L)))
                 .thenReturn(testPostDto);
 
@@ -230,6 +243,8 @@ class ForumControllerTest {
         Long threadId = 1L;
         ForumController.CreatePostRequest request = new ForumController.CreatePostRequest();
         request.setContent("New post content");
+        
+        when(authUtils.getCurrentUser(null)).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(post("/api/forums/threads/{threadId}/posts", threadId)

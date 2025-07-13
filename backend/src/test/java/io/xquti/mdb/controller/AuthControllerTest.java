@@ -1,16 +1,21 @@
 package io.xquti.mdb.controller;
 
 import io.xquti.mdb.dto.UserDto;
-import io.xquti.mdb.service.JwtService;
-import io.xquti.mdb.service.UserService;
+import io.xquti.mdb.util.AuthUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
@@ -26,18 +31,27 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
-@Import(SecurityConfig.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(AuthControllerTest.TestSecurityConfig.class)
 class AuthControllerTest {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        @Primary
+        public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
+            http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+            return http.build();
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private JwtService jwtService;
-
-    @MockBean
-    private UserService userService;
+    private AuthUtils authUtils;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -60,9 +74,7 @@ class AuthControllerTest {
         String token = "valid-jwt-token";
         String email = "test@example.com";
         
-        when(jwtService.extractUsername(token)).thenReturn(email);
-        when(jwtService.validateToken(token, email)).thenReturn(true);
-        when(userService.findByEmailDto(email)).thenReturn(testUserDto);
+        when(authUtils.getCurrentUser("Bearer " + token)).thenReturn(testUserDto);
 
         // Act & Assert
         mockMvc.perform(get("/api/auth/me")
@@ -80,8 +92,7 @@ class AuthControllerTest {
         String token = "invalid-jwt-token";
         String email = "test@example.com";
         
-        when(jwtService.extractUsername(token)).thenReturn(email);
-        when(jwtService.validateToken(token, email)).thenReturn(false);
+        when(authUtils.getCurrentUser("Bearer " + token)).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(get("/api/auth/me")
@@ -95,7 +106,7 @@ class AuthControllerTest {
         // Arrange
         String token = "malformed-token";
         
-        when(jwtService.extractUsername(token)).thenThrow(new RuntimeException("Invalid token"));
+        when(authUtils.getCurrentUser("Bearer " + token)).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(get("/api/auth/me")
@@ -110,9 +121,7 @@ class AuthControllerTest {
         String token = "valid-jwt-token";
         String email = "nonexistent@example.com";
         
-        when(jwtService.extractUsername(token)).thenReturn(email);
-        when(jwtService.validateToken(token, email)).thenReturn(true);
-        when(userService.findByEmailDto(email)).thenReturn(null);
+        when(authUtils.getCurrentUser("Bearer " + token)).thenReturn(null);
 
         // Act & Assert
         mockMvc.perform(get("/api/auth/me")
@@ -123,6 +132,9 @@ class AuthControllerTest {
 
     @Test
     void getCurrentUser_WithoutAuthorizationHeader_ShouldReturn401() throws Exception {
+        // Arrange
+        when(authUtils.getCurrentUser(null)).thenReturn(null);
+        
         // Act & Assert
         mockMvc.perform(get("/api/auth/me")
                 .with(SecurityMockMvcRequestPostProcessors.csrf()))

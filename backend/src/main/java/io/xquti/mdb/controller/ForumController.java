@@ -9,8 +9,7 @@ import io.xquti.mdb.dto.ForumPostDto;
 import io.xquti.mdb.dto.ForumThreadDto;
 import io.xquti.mdb.dto.UserDto;
 import io.xquti.mdb.service.ForumService;
-import io.xquti.mdb.service.JwtService;
-import io.xquti.mdb.service.UserService;
+import io.xquti.mdb.util.AuthUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/forums")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:3000"})
 @Tag(name = "Forum", description = "Forum management API for threads and posts")
 public class ForumController {
 
@@ -35,10 +33,7 @@ public class ForumController {
     private ForumService forumService;
     
     @Autowired
-    private JwtService jwtService;
-    
-    @Autowired
-    private UserService userService;
+    private AuthUtils authUtils;
 
     @GetMapping("/threads")
     @Operation(summary = "Get all forum threads with pagination and optional category filtering")
@@ -73,7 +68,7 @@ public class ForumController {
         
         logger.debug("Creating new forum thread: {}", request.getTitle());
         
-        UserDto user = getCurrentUser(authHeader);
+        UserDto user = authUtils.getCurrentUser(authHeader);
         if (user == null) {
             logger.warn("Unauthorized attempt to create forum thread");
             return ResponseEntity.status(401).build();
@@ -138,7 +133,7 @@ public class ForumController {
         
         logger.debug("Creating post in thread: {}", threadId);
         
-        UserDto user = getCurrentUser(authHeader);
+        UserDto user = authUtils.getCurrentUser(authHeader);
         if (user == null) {
             logger.warn("Unauthorized attempt to create forum post");
             return ResponseEntity.status(401).build();
@@ -154,24 +149,7 @@ public class ForumController {
         return ResponseEntity.ok(post);
     }
 
-    private UserDto getCurrentUser(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            logger.debug("Missing or invalid Authorization header");
-            return null;
-        }
-        
-        try {
-            String token = authHeader.substring(7); // Remove "Bearer " prefix
-            String email = jwtService.extractUsername(token);
-            
-            if (jwtService.validateToken(token, email)) {
-                return userService.findByEmailDto(email);
-            }
-        } catch (Exception e) {
-            logger.debug("Invalid token in request: {}", e.getMessage());
-        }
-        return null;
-    }
+
 
     // Request DTOs
     public static class CreateThreadRequest {

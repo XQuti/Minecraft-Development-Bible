@@ -1,8 +1,7 @@
 package io.xquti.mdb.controller;
 
 import io.xquti.mdb.dto.UserDto;
-import io.xquti.mdb.service.JwtService;
-import io.xquti.mdb.service.UserService;
+import io.xquti.mdb.util.AuthUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,41 +13,24 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:3000"})
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
-    private JwtService jwtService;
-    
-    @Autowired
-    private UserService userService;
+    private AuthUtils authUtils;
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         logger.debug("Getting current user from token");
         
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            logger.warn("Missing or invalid Authorization header");
-            return ResponseEntity.status(401).build();
+        UserDto user = authUtils.getCurrentUser(authHeader);
+        if (user != null) {
+            logger.info("Successfully retrieved current user: {}", user.getEmail());
+            return ResponseEntity.ok(user);
         }
         
-        try {
-            String token = authHeader.substring(7); // Remove "Bearer " prefix
-            String email = jwtService.extractUsername(token);
-            
-            if (jwtService.validateToken(token, email)) {
-                UserDto user = userService.findByEmailDto(email);
-                if (user != null) {
-                    logger.info("Successfully retrieved current user: {}", email);
-                    return ResponseEntity.ok(user);
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to get current user from token: {}", e.getMessage());
-        }
-        
+        logger.warn("Failed to get current user from token");
         return ResponseEntity.status(401).build();
     }
 

@@ -79,8 +79,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Only allow specific origins in production
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:4200", "http://localhost:3000"));
+        // Configure allowed origins based on environment
+        String allowedOrigins = System.getenv("ALLOWED_ORIGINS");
+        if (allowedOrigins != null) {
+            configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+        } else {
+            // Default to localhost for development
+            configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:4200", "http://localhost:3000"));
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
@@ -113,12 +119,20 @@ public class SecurityConfig {
                 String token = jwtService.generateToken(email);
                 
                 // Redirect to frontend with token
-                response.sendRedirect("http://localhost:4200/auth/callback?token=" + token);
+                String frontendUrl = System.getenv("FRONTEND_URL");
+                if (frontendUrl == null) {
+                    frontendUrl = "http://localhost:4200";
+                }
+                response.sendRedirect(frontendUrl + "/auth/callback?token=" + token);
                 
                 logger.info("OAuth2 authentication completed successfully for user: {}", email);
             } catch (Exception e) {
                 logger.error("Error during OAuth2 authentication for user: {}", email, e);
-                response.sendRedirect("http://localhost:4200/login?error=true");
+                String frontendUrl = System.getenv("FRONTEND_URL");
+                if (frontendUrl == null) {
+                    frontendUrl = "http://localhost:4200";
+                }
+                response.sendRedirect(frontendUrl + "/login?error=true");
             }
         };
     }

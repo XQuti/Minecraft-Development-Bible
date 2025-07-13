@@ -5,7 +5,7 @@ A comprehensive Spring Boot REST API for the Minecraft Development Bible platfor
 ## Technologies Used
 
 - **Java 21** - Modern Java features and performance improvements
-- **Spring Boot 3.2.1** - Application framework with auto-configuration
+- **Spring Boot 3.4.1** - Application framework with auto-configuration
 - **Spring Security** - Authentication and authorization
 - **Spring Data JPA** - Database abstraction layer
 - **PostgreSQL** - Primary database

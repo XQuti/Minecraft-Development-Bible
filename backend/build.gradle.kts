@@ -77,6 +77,12 @@ checkstyle {
     configFile = file("config/checkstyle/checkstyle.xml")
 }
 
+configurations.checkstyle {
+    resolutionStrategy.capabilitiesResolution.withCapability("com.google.collections:google-collections") {
+        select("com.google.guava:guava:0")
+    }
+}
+
 tasks.named("checkstyleMain") {
     group = "verification"
     description = "Run Checkstyle analysis for main source set"

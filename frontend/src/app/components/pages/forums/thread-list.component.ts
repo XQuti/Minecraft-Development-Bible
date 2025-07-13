@@ -242,6 +242,6 @@ export class ThreadListComponent implements OnInit {
 
   getThreadPreview(thread: ForumThread): string {
     // If thread has a content property, use it; otherwise use a placeholder
-    return (thread as any).content || 'Click to view thread content...';
+    return thread.content || 'Click to view thread content...';
   }
 }

@@ -3,6 +3,7 @@ import { User } from './user.model';
 export interface ForumThread {
   id: number;
   title: string;
+  content?: string;
   author: User;
   isPinned: boolean;
   isLocked: boolean;

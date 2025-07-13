@@ -51,6 +51,9 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-your-github-client-id}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-your-github-client-secret}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4200}
+      - DDL_AUTO=${DDL_AUTO:-update}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:3000}
     ports:
       - "8080:8080"
     healthcheck:

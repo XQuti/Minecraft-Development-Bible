@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mdb-postgres
+    environment:
+      POSTGRES_DB: mdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docs/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - mdb-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mdb-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mdb-network
+
+  # Backend Spring Boot Application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mdb-backend
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=mdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=mySecretKey1234567890123456789012345678901234567890
+      - JWT_EXPIRATION=86400000
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your-google-client-id}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-your-github-client-id}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-your-github-client-secret}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - mdb-network
+
+  # Frontend Angular Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mdb-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - mdb-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mdb-network:
+    driver: bridge

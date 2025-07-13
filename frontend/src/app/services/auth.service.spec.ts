@@ -1,0 +1,174 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { AuthService } from './auth.service';
+import { User } from '../models/user.model';
+
+describe('AuthService', () => {
+  let service: AuthService;
+  let httpMock: HttpTestingController;
+
+  const mockUser: User = {
+    id: 1,
+    email: 'test@example.com',
+    username: 'testuser',
+    avatarUrl: null,
+    provider: 'local',
+    roles: ['USER'],
+    createdAt: new Date()
+  };
+
+  const mockAuthResponse = {
+    token: 'jwt-token',
+    user: mockUser
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [AuthService]
+    });
+    service = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+    localStorage.clear();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  // Note: register method not implemented in current AuthService
+  // This service uses OAuth2 authentication only
+
+  describe('login', () => {
+    it('should redirect to OAuth provider', () => {
+      // Mock window.location.href
+      const originalLocation = window.location;
+      delete (window as any).location;
+      window.location = { ...originalLocation, href: '' };
+
+      service.login('google');
+
+      expect(window.location.href).toBe('http://localhost:8080/oauth2/authorization/google');
+
+      // Restore original location
+      window.location = originalLocation;
+    });
+
+    it('should handle invalid provider', () => {
+      spyOn(console, 'error');
+      
+      service.login('invalid' as any);
+      
+      expect(console.error).toHaveBeenCalledWith('Invalid OAuth provider:', 'invalid');
+    });
+  });
+
+  describe('logout', () => {
+    it('should clear local storage and call logout endpoint', () => {
+      localStorage.setItem('auth_token', 'jwt-token');
+
+      service.logout().subscribe(response => {
+        expect(response).toBeDefined();
+        expect(localStorage.getItem('auth_token')).toBeNull();
+      });
+
+      const req = httpMock.expectOne('http://localhost:8080/api/auth/logout');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer jwt-token');
+      req.flush({ message: 'Logged out successfully' });
+    });
+
+    it('should clear local storage even if logout endpoint fails', () => {
+      localStorage.setItem('auth_token', 'jwt-token');
+
+      service.logout().subscribe(response => {
+        expect(response).toBeDefined();
+        expect(localStorage.getItem('auth_token')).toBeNull();
+      });
+
+      const req = httpMock.expectOne('http://localhost:8080/api/auth/logout');
+      req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+    });
+  });
+
+  describe('getCurrentUser', () => {
+    it('should return current user when token exists', () => {
+      localStorage.setItem('auth_token', 'jwt-token');
+
+      service.getCurrentUser().subscribe(user => {
+        expect(user).toEqual(mockUser);
+      });
+
+      const req = httpMock.expectOne('http://localhost:8080/api/auth/me');
+      expect(req.request.method).toBe('GET');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer jwt-token');
+      req.flush(mockUser);
+    });
+
+    it('should return null when no token exists', () => {
+      service.getCurrentUser().subscribe(user => {
+        expect(user).toBeNull();
+      });
+
+      httpMock.expectNone('http://localhost:8080/api/auth/me');
+    });
+
+    it('should handle getCurrentUser error', () => {
+      localStorage.setItem('auth_token', 'jwt-token');
+
+      service.getCurrentUser().subscribe(user => {
+        expect(user).toBeNull();
+      });
+
+      const req = httpMock.expectOne('http://localhost:8080/api/auth/me');
+      req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+    });
+  });
+
+  describe('getToken', () => {
+    it('should return token from localStorage', () => {
+      localStorage.setItem('auth_token', 'jwt-token');
+      expect(service.getToken()).toBe('jwt-token');
+    });
+
+    it('should return null when no token exists', () => {
+      expect(service.getToken()).toBeNull();
+    });
+  });
+
+  describe('isAuthenticated', () => {
+    it('should return true when token exists', () => {
+      localStorage.setItem('auth_token', 'jwt-token');
+      expect(service.isAuthenticated()).toBe(true);
+    });
+
+    it('should return false when no token exists', () => {
+      expect(service.isAuthenticated()).toBe(false);
+    });
+  });
+
+  describe('handleAuthCallback', () => {
+    it('should handle auth callback with valid token', () => {
+      service.handleAuthCallback('jwt-token');
+
+      expect(localStorage.getItem('auth_token')).toBe('jwt-token');
+
+      const req = httpMock.expectOne('http://localhost:8080/api/auth/me');
+      expect(req.request.method).toBe('GET');
+      req.flush(mockUser);
+    });
+
+    it('should handle invalid token in callback', () => {
+      spyOn(console, 'error');
+      
+      service.handleAuthCallback('');
+      
+      expect(console.error).toHaveBeenCalledWith('Invalid token received in auth callback');
+      expect(localStorage.getItem('auth_token')).toBeNull();
+    });
+  });
+});

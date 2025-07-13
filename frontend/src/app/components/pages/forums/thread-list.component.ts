@@ -183,7 +183,8 @@ export class ThreadListComponent implements OnInit {
   private loadThreads(): void {
     this.forumService.getThreads().subscribe({
       next: (threadsResponse) => {
-        this.threads = threadsResponse.content;
+        // threadsResponse is already a PageResponse<ForumThread>, so access .content
+        this.threads = threadsResponse.content || [];
         this.loading = false;
       },
       error: (error: any) => {

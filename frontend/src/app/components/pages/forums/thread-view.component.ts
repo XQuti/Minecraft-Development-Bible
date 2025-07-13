@@ -183,33 +183,23 @@ export class ThreadViewComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    // Load thread posts
-    this.forumService.getThreadPosts(this.threadId).subscribe({
-      next: (postsResponse) => {
-        this.posts = postsResponse.content;
-        
-        // Create thread object from first post if available
-        if (this.posts.length > 0) {
-          const firstPost = this.posts[0];
-          this.thread = {
-            id: this.threadId,
-            title: firstPost.thread?.title || 'Thread',
-            author: firstPost.author,
-            isPinned: false,
-            isLocked: false,
-            postCount: this.posts.length,
-            lastActivity: firstPost.createdAt,
-            createdAt: firstPost.createdAt
-          };
+    // Load thread details and posts separately using forkJoin
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin({
+        thread: this.forumService.getThread(this.threadId),
+        posts: this.forumService.getThreadPosts(this.threadId)
+      }).subscribe({
+        next: ({ thread, posts }) => {
+          this.thread = thread;
+          this.posts = posts.content || [];
+          this.loading = false;
+        },
+        error: (error) => {
+          this.error = 'Failed to load thread. Please try again later.';
+          this.loading = false;
+          console.error('Error loading thread:', error);
         }
-        
-        this.loading = false;
-      },
-      error: (error) => {
-        this.error = 'Failed to load thread. Please try again later.';
-        this.loading = false;
-        console.error('Error loading thread:', error);
-      }
+      });
     });
   }
 

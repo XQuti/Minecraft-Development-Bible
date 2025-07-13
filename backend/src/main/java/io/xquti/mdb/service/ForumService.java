@@ -135,9 +135,9 @@ public class ForumService {
     public Page<ForumPostDto> getThreadPosts(Long threadId, Pageable pageable) {
         logger.debug("Fetching posts for thread: {}", threadId);
         
-        // Verify thread exists
+        // Verify thread exists - throw exception instead of returning null
         if (!forumThreadRepository.existsById(threadId)) {
-            return null; // Return null to indicate thread not found
+            throw new EntityNotFoundException("ForumThread", threadId);
         }
         
         Page<ForumPost> posts = forumPostRepository.findByThreadIdOrderByCreatedAtAsc(threadId, pageable);
@@ -148,14 +148,10 @@ public class ForumService {
         logger.info("Creating new forum post in thread: {} by user: {}", threadId, userId);
         
         ForumThread thread = forumThreadRepository.findById(threadId)
-            .orElse(null);
-        
-        if (thread == null) {
-            return null; // Return null to indicate thread not found
-        }
+            .orElseThrow(() -> new EntityNotFoundException("ForumThread", threadId));
         
         if (thread.getIsLocked()) {
-            return null; // Return null to indicate thread is locked
+            throw new ForbiddenException("Cannot post to locked thread");
         }
         
         User author = userRepository.findById(userId)

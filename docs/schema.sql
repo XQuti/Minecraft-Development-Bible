@@ -79,6 +79,10 @@ CREATE INDEX idx_forum_threads_created ON forum_threads(created_at DESC);
 CREATE INDEX idx_forum_threads_pinned ON forum_threads(is_pinned DESC, updated_at DESC);
 CREATE INDEX idx_forum_posts_thread ON forum_posts(thread_id, created_at ASC);
 
+-- Additional indexes for foreign key columns to improve query performance
+CREATE INDEX idx_forum_threads_author_id ON forum_threads(author_id);
+CREATE INDEX idx_forum_posts_author_id ON forum_posts(author_id);
+
 -- Sample data for development
 INSERT INTO tutorial_modules (title, description, display_order) VALUES
 ('Getting Started with Paper API', 'Learn the basics of creating Minecraft server plugins with the Paper API', 1),

@@ -74,9 +74,9 @@ public class ForumController {
             return ResponseEntity.status(401).build();
         }
         
-        ForumThreadDto thread = forumService.createThread(request.getTitle(), request.getContent(), user.getId());
+        ForumThreadDto thread = forumService.createThread(request.getTitle(), request.getContent(), user.id());
         
-        logger.info("Created forum thread with ID: {} by user: {}", thread.getId(), user.getEmail());
+        logger.info("Created forum thread with ID: {} by user: {}", thread.getId(), user.email());
         return ResponseEntity.ok(thread);
     }
 
@@ -139,13 +139,13 @@ public class ForumController {
             return ResponseEntity.status(401).build();
         }
         
-        ForumPostDto post = forumService.createPost(threadId, request.getContent(), user.getId());
+        ForumPostDto post = forumService.createPost(threadId, request.getContent(), user.id());
         if (post == null) {
             logger.warn("Failed to create post - thread not found or locked: {}", threadId);
             return ResponseEntity.badRequest().build();
         }
         
-        logger.info("Created forum post in thread: {} by user: {}", threadId, user.getEmail());
+        logger.info("Created forum post in thread: {} by user: {}", threadId, user.email());
         return ResponseEntity.ok(post);
     }
 

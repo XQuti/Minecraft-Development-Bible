@@ -29,13 +29,13 @@ public class DtoMapper {
         if (userDto == null) return null;
         
         User user = new User();
-        user.setId(userDto.getId());
-        user.setUsername(userDto.getUsername());
-        user.setEmail(userDto.getEmail());
-        user.setAvatarUrl(userDto.getAvatarUrl());
-        user.setProvider(userDto.getProvider());
-        user.setRoles(userDto.getRoles());
-        user.setCreatedAt(userDto.getCreatedAt());
+        user.setId(userDto.id());
+        user.setUsername(userDto.username());
+        user.setEmail(userDto.email());
+        user.setAvatarUrl(userDto.avatarUrl());
+        user.setProvider(userDto.provider());
+        user.setRoles(userDto.roles());
+        user.setCreatedAt(userDto.createdAt());
         return user;
     }
     

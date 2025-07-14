@@ -72,9 +72,8 @@ export class ModuleListComponent implements OnInit {
       next: (modules: TutorialModule[]) => {
         this.modules = modules;
         this.loading = false;
-      },
-      error: (error: any) => {
-        this.error = 'Failed to load tutorial modules. Please try again later.';
+      },        error: (error: Error) => {
+          this.error = 'Failed to load tutorial modules. Please try again later.';
         this.loading = false;
         console.error('Error loading modules:', error);
       }

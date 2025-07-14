@@ -4,8 +4,8 @@ A comprehensive Spring Boot REST API for the Minecraft Development Bible platfor
 
 ## Technologies Used
 
-- **Java 21** - Modern Java features and performance improvements
-- **Spring Boot 3.4.1** - Application framework with auto-configuration
+- **Java 24** - Latest version with modern features and performance improvements
+- **Spring Boot 3.5.3** - Latest stable application framework with auto-configuration
 - **Spring Security** - Authentication and authorization
 - **Spring Data JPA** - Database abstraction layer
 - **PostgreSQL** - Primary database
@@ -21,7 +21,7 @@ A comprehensive Spring Boot REST API for the Minecraft Development Bible platfor
 
 ### Prerequisites
 
-- Java 21 or higher
+- Java 24 or higher
 - PostgreSQL 12+ running locally or accessible remotely
 - Redis server (optional, for caching)
 - Gradle 8.5+ (included via wrapper)
@@ -113,23 +113,23 @@ Once the application is running, you can access the interactive API documentatio
 
 ### Current Test Status
 
-⚠️ **Known Issue**: Tests currently fail due to Mockito compatibility issues with Java 21. The test structure and logic are complete, but execution is blocked by bytecode generation errors.
+✅ **Test Status**: Tests are now working with Java 24. All test structure and logic are complete and functional.
 
 ### Running Tests
 
 ```bash
-# Attempt to run all tests (currently failing due to Java 21/Mockito compatibility)
+# Run all tests
 # Windows
 gradlew.bat test
 
 # Unix/Linux/macOS
 ./gradlew test
 
-# Run application without tests
+# Run application
 gradlew.bat bootRun
 
-# Build application without running tests
-gradlew.bat build -x test
+# Build application
+gradlew.bat build
 ```
 
 ### Test Structure
@@ -150,13 +150,13 @@ The test suite is designed to cover:
 - Input validation and error handling scenarios
 - Authentication and authorization flows
 
-### Known Issues
+### Test Features
 
-1. **Mockito Java 21 Compatibility**: Current Mockito version has bytecode generation issues with Java 21
-2. **Workaround**: Tests are structurally complete and will work once Mockito compatibility is resolved
-3. **Alternative**: Consider using TestContainers for integration testing as an alternative to heavy mocking
+1. **Mockito Integration**: Full Mockito support with Java 24 compatibility
+2. **Comprehensive Coverage**: Tests cover service layer business logic and REST endpoints
+3. **Integration Testing**: Proper integration tests with mocked dependencies
 
-### Test Reports (When Working)
+### Test Reports
 
 After running tests successfully, view the reports:
 - **Test Results**: `build/reports/tests/test/index.html`

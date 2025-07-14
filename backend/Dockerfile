@@ -1,5 +1,5 @@
 # Multi-stage build for security and smaller image size
-FROM openjdk:21-jdk-slim AS builder
+FROM eclipse-temurin:24-jdk-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -9,6 +9,7 @@ COPY gradlew .
 COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
+COPY config config
 
 # Make gradlew executable
 RUN chmod +x ./gradlew
@@ -20,10 +21,10 @@ COPY src src
 RUN ./gradlew build -x test
 
 # Production stage
-FROM openjdk:21-jre-slim
+FROM eclipse-temurin:24-jre-alpine
 
-# Create non-root user for security
-RUN groupadd -r mdbuser && useradd -r -g mdbuser mdbuser
+# Create non-root user for security (Alpine Linux)
+RUN addgroup -S mdbuser && adduser -S mdbuser -G mdbuser
 
 # Set working directory
 WORKDIR /app
@@ -40,8 +41,13 @@ USER mdbuser
 # Expose port
 EXPOSE 8080
 
+# Install curl for health checks (Alpine Linux)
+USER root
+RUN apk add --no-cache curl
+USER mdbuser
+
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Run the application with JVM optimizations

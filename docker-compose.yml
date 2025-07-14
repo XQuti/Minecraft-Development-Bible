@@ -31,6 +31,22 @@ services:
     networks:
       - mdb-network
 
+  # Elasticsearch Search Engine
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: mdb-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - mdb-network
+
   # Backend Spring Boot Application
   backend:
     build:
@@ -45,7 +61,8 @@ services:
       - DB_PASSWORD=password
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET:-mySecretKey1234567890123456789012345678901234567890}
+      - ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - JWT_SECRET=${JWT_SECRET:-please-change-this-super-secret-jwt-key-in-production-environment-minimum-32-chars}
       - JWT_EXPIRATION=86400000
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-your-google-client-id}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
@@ -66,6 +83,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      elasticsearch:
+        condition: service_started
+    restart: on-failure
     networks:
       - mdb-network
 
@@ -85,6 +105,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  elasticsearch_data:
 
 networks:
   mdb-network:

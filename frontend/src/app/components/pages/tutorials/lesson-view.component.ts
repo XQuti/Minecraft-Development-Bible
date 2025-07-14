@@ -179,9 +179,8 @@ export class LessonViewComponent implements OnInit {
       next: (modules: TutorialModule[]) => {
         this.module = modules.find((m: TutorialModule) => m.id === this.moduleId) || null;
         this.loading = false;
-      },
-      error: (error: any) => {
-        console.error('Error loading module info:', error);
+      },        error: (error: Error) => {
+          console.error('Error loading module info:', error);
         this.loading = false;
       }
     });

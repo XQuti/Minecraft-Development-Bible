@@ -1,14 +1,41 @@
-# Gradle files
+# Backend - Gradle files
 .gradle/
 build/
 gradle-*/
 *.jar
 *.zip
 
+# Frontend - Node/Angular files
+node_modules/
+/dist
+/tmp
+/out-tsc
+/bazel-out
+npm-debug.log
+yarn-error.log
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
 # IDE files
 .idea/
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
 *.iml
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # OS files
 .DS_Store
@@ -20,3 +47,15 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Database files
+*.db
+*.sqlite
+
+# Ignore vscode AI rules
+.github\copilot-instructions.md

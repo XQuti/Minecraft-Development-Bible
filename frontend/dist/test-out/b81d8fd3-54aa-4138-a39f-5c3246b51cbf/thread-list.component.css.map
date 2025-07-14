@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/components/pages/forums/thread-list.component.ts"],
+  "sourcesContent": ["\n    .line-clamp-2 {\n      display: -webkit-box;\n      -webkit-line-clamp: 2;\n      -webkit-box-orient: vertical;\n      overflow: hidden;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,WAAA;AACA,sBAAA;AACA,sBAAA;AACA,YAAA;;",
+  "names": []
+}

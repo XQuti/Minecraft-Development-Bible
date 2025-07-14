@@ -1,0 +1,99 @@
+name: Development MCP Servers
+version: 1.0.0
+schema: v1
+mcpServers:
+  # Code Analysis and Quality
+  - name: ESLint Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-eslint"
+    env: {}
+
+  # Testing Framework Integration
+  - name: Jest Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-jest"
+    env: {}
+
+  # Package Management
+  - name: NPM Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-npm"
+    env: {}
+
+  # Build Tools
+  - name: Webpack Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-webpack"
+    env: {}
+
+  # API Documentation
+  - name: OpenAPI Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-openapi"
+    env: {}
+
+  # GraphQL Integration
+  - name: GraphQL Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-graphql"
+    env: {}
+
+  # Environment Management
+  - name: Dotenv Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-dotenv"
+    env: {}
+
+  # Log Analysis
+  - name: Log Parser Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-logs"
+    env: {}
+
+  # Performance Monitoring
+  - name: Performance Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-performance"
+    env: {}
+
+  # Security Scanning
+  - name: Security Scanner Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-security"
+    env: {}
+
+  # Code Formatting
+  - name: Prettier Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-prettier"
+    env: {}
+
+  # TypeScript Support
+  - name: TypeScript Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-typescript"
+    env: {}

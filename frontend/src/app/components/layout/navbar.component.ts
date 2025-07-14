@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -74,14 +74,14 @@ import { Observable } from 'rxjs';
     </nav>
   `
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent {
   currentUser$: Observable<User | null>;
 
   constructor(private authService: AuthService) {
     this.currentUser$ = this.authService.currentUser$;
   }
 
-  ngOnInit(): void {}
+
 
   login(provider: 'google' | 'github'): void {
     this.authService.login(provider);

@@ -187,7 +187,7 @@ export class ThreadListComponent implements OnInit {
         this.threads = threadsResponse.content || [];
         this.loading = false;
       },
-      error: (error: any) => {
+      error: (error: unknown) => {
         this.error = 'Failed to load forum threads. Please try again later.';
         this.loading = false;
         console.error('Error loading threads:', error);

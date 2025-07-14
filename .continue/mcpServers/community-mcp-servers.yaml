@@ -1,0 +1,117 @@
+name: Community MCP Servers
+version: 1.0.0
+schema: v1
+mcpServers:
+  # Docker Integration - Essential for containerized development
+  - name: Docker Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-docker"
+    env: {}
+
+  # Kubernetes Integration - Essential for k8s cluster management
+  - name: Kubernetes Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-kubernetes"
+    env:
+      KUBECONFIG: "${KUBECONFIG}"
+
+  # AWS Integration - Essential for cloud operations
+  - name: AWS Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-aws"
+    env:
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_REGION: "${AWS_REGION}"
+
+  # Slack Integration - Essential for team communication
+  - name: Slack Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-slack"
+    env:
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+
+  # Notion Integration - Essential for documentation and notes
+  - name: Notion Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-notion"
+    env:
+      NOTION_API_KEY: "${NOTION_API_KEY}"
+
+  # Jira Integration - Essential for project management
+  - name: Jira Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-jira"
+    env:
+      JIRA_URL: "${JIRA_URL}"
+      JIRA_USERNAME: "${JIRA_USERNAME}"
+      JIRA_API_TOKEN: "${JIRA_API_TOKEN}"
+
+  # Google Drive Integration - Essential for cloud file storage
+  - name: Google Drive Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-gdrive"
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: "${GOOGLE_APPLICATION_CREDENTIALS}"
+
+  # MongoDB Integration - Essential for NoSQL database operations
+  - name: MongoDB Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-mongodb"
+    env:
+      MONGODB_CONNECTION_STRING: "${MONGODB_CONNECTION_STRING}"
+
+  # Redis Integration - Essential for caching and session management
+  - name: Redis Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-redis"
+    env:
+      REDIS_URL: "${REDIS_URL}"
+
+  # Elasticsearch Integration - Essential for search and analytics
+  - name: Elasticsearch Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-elasticsearch"
+    env:
+      ELASTICSEARCH_URL: "${ELASTICSEARCH_URL}"
+      ELASTICSEARCH_USERNAME: "${ELASTICSEARCH_USERNAME}"
+      ELASTICSEARCH_PASSWORD: "${ELASTICSEARCH_PASSWORD}"
+
+  # Sentry Integration - Essential for error monitoring
+  - name: Sentry Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-sentry"
+    env:
+      SENTRY_DSN: "${SENTRY_DSN}"
+      SENTRY_AUTH_TOKEN: "${SENTRY_AUTH_TOKEN}"
+
+  # Linear Integration - Essential for issue tracking
+  - name: Linear Server
+    command: npx
+    args:
+      - -y
+      - "mcp-server-linear"
+    env:
+      LINEAR_API_KEY: "${LINEAR_API_KEY}"

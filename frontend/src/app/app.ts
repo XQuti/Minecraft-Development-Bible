@@ -7,6 +7,6 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App {
-  protected readonly title = signal('minecraft-dev-bible-frontend');
+export class AppComponent {
+  public readonly title = signal('minecraft-dev-bible-frontend');
 }

@@ -21,6 +21,6 @@ public interface ForumThreadRepository extends JpaRepository<ForumThread, Long> 
     
     List<ForumThread> findByCategoryOrderByCreatedAtDesc(String category);
     
-    @Query("SELECT t FROM ForumThread t WHERE t.title LIKE %:keyword% OR t.content LIKE %:keyword%")
-    List<ForumThread> findByTitleContainingOrContentContaining(@Param("keyword") String keyword);
+    @Query("SELECT t FROM ForumThread t WHERE t.title LIKE :keyword OR t.content LIKE :keyword")
+    Page<ForumThread> findByTitleContainingOrContentContaining(@Param("keyword") String keyword, Pageable pageable);
 }

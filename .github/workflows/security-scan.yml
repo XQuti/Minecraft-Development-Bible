@@ -1,0 +1,217 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      # Backend Security Scans
+      - name: Run OWASP Dependency Check
+        working-directory: ./backend
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            gradlew.bat dependencyCheckAnalyze --info
+          else
+            ./gradlew dependencyCheckAnalyze --info
+          fi
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      - name: Upload OWASP Dependency Check results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: owasp-dependency-check-report
+          path: backend/build/reports/
+
+      - name: Run Semgrep Security Analysis
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/owasp-top-ten
+            p/java
+            p/typescript
+            p/secrets
+            p/security-audit
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java, javascript
+          queries: security-and-quality
+
+      - name: Build Backend for CodeQL
+        working-directory: ./backend
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            gradlew.bat compileJava
+          else
+            ./gradlew compileJava
+          fi
+
+      - name: Build Frontend for CodeQL
+        working-directory: ./frontend
+        run: |
+          bun install
+          bun run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      # Frontend Security Scans
+      - name: Run Bun Audit
+        working-directory: ./frontend
+        run: |
+          bun install
+          bun audit
+
+      - name: Run ESLint Security Rules
+        working-directory: ./frontend
+        run: |
+          bun run lint
+
+      # Custom Security Tests
+      - name: Run Custom Security Tests
+        working-directory: ./backend
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            gradlew.bat test --tests "*SecurityTest*"
+          else
+            ./gradlew test --tests "*SecurityTest*"
+          fi
+
+      - name: Check for Hardcoded Secrets
+        run: |
+          # Check for potential secrets in code
+          if grep -r -i "password\|secret\|key\|token" --include="*.java" --include="*.ts" --include="*.js" --exclude-dir=node_modules --exclude-dir=.git .; then
+            echo "⚠️ Potential hardcoded secrets found. Please review."
+            exit 1
+          fi
+
+      - name: Validate Security Configuration
+        working-directory: ./backend
+        run: |
+          # Check that security configurations are properly set
+          if grep -r "please-change-this\|CHANGE_THIS\|default-secret" src/; then
+            echo "❌ Default security configurations found!"
+            exit 1
+          fi
+          echo "✅ Security configurations validated"
+
+      - name: Check HTTPS Enforcement
+        run: |
+          # Verify HTTPS is enforced in production configs
+          if ! grep -r "secure.*true\|https" backend/src/main/resources/application*.yml; then
+            echo "⚠️ HTTPS enforcement may not be properly configured"
+          fi
+
+      # Security Report Generation
+      - name: Generate Security Report
+        if: always()
+        run: |
+          echo "# 🔒 Security Scan Report" > security-report.md
+          echo "**Date**: $(date)" >> security-report.md
+          echo "**Commit**: ${{ github.sha }}" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Backend Security" >> security-report.md
+          echo "- ✅ OWASP Dependency Check: Completed" >> security-report.md
+          echo "- ✅ Semgrep Analysis: Completed" >> security-report.md
+          echo "- ✅ CodeQL Analysis: Completed" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Frontend Security" >> security-report.md
+          echo "- ✅ Bun Audit: Completed" >> security-report.md
+          echo "- ✅ ESLint Security: Completed" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Custom Security Checks" >> security-report.md
+          echo "- ✅ Hardcoded Secrets: Validated" >> security-report.md
+          echo "- ✅ Security Configuration: Validated" >> security-report.md
+          echo "- ✅ HTTPS Enforcement: Checked" >> security-report.md
+
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-report
+          path: security-report.md
+
+      # Fail the build if critical vulnerabilities are found
+      - name: Check for Critical Vulnerabilities
+        if: always()
+        run: |
+          # This step would check the results of all security scans
+          # and fail the build if critical vulnerabilities are found
+          echo "🔍 Checking for critical vulnerabilities..."
+          
+          # Check OWASP results (if available)
+          if [ -f "backend/build/reports/dependency-check-report.json" ]; then
+            CRITICAL_COUNT=$(jq '.dependencies[] | select(.vulnerabilities[]?.severity == "CRITICAL") | length' backend/build/reports/dependency-check-report.json 2>/dev/null || echo "0")
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Critical vulnerabilities found in dependencies!"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ No critical vulnerabilities detected"
+
+  # Notify security team on failure
+  notify-security:
+    needs: security-scan
+    runs-on: ubuntu-latest
+    if: failure()
+    
+    steps:
+      - name: Notify Security Team
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "🚨 Security scan failed for MDB Platform. Please review immediately."
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

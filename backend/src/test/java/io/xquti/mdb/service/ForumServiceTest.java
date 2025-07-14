@@ -26,9 +26,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ForumServiceTest {
@@ -89,16 +97,15 @@ class ForumServiceTest {
     @Test
     void getAllThreads_WithoutCategory_ShouldReturnAllThreads() {
         // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        List<ForumThread> threads = Arrays.asList(testThread);
-        Page<ForumThread> threadPage = new PageImpl<>(threads, pageable, 1);
-        Page<ForumThreadDto> expectedDtoPage = new PageImpl<>(Arrays.asList(testThreadDto), pageable, 1);
+        final Pageable pageable = PageRequest.of(0, 10);
+        final List<ForumThread> threads = Arrays.asList(testThread);
+        final Page<ForumThread> threadPage = new PageImpl<>(threads, pageable, 1);
 
         when(forumThreadRepository.findAllOrderByPinnedAndUpdated(pageable)).thenReturn(threadPage);
         when(dtoMapper.toForumThreadDto(testThread)).thenReturn(testThreadDto);
 
         // Act
-        Page<ForumThreadDto> result = forumService.getAllThreads(pageable, null);
+        final Page<ForumThreadDto> result = forumService.getAllThreads(pageable, null);
 
         // Assert
         assertNotNull(result);

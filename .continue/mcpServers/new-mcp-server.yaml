@@ -1,0 +1,66 @@
+mcpServers:
+- args:
+  - -y
+  - '@deepcode/github-analyzer'
+  command: npx
+  env: {}
+  name: GitHub Analyzer
+- args:
+  - -y
+  - eslint
+  command: npx
+  env: {}
+  name: Code Quality Checker
+- args:
+  - -y
+  - snyk
+  command: npx
+  env:
+    SNYK_TOKEN: ${SNYK_TOKEN}
+  name: Security Scanner
+- args:
+  - -y
+  - npm-audit
+  command: npx
+  env: {}
+  name: Dependency Auditor
+- args:
+  - -y
+  - fs-context-server
+  command: npx
+  env: {}
+  name: Filesystem Context Provider
+- args:
+  - -y
+  - procmon
+  command: npx
+  env: {}
+  name: Process Monitor
+- args:
+  - -y
+  - llm-context-server
+  command: npx
+  env:
+    MODEL: gpt-4o
+  name: LLM Context Engine
+- args:
+  - -y
+  - log-analyzer
+  command: npx
+  env: {}
+  name: Log File Analyzer
+- args:
+  - -y
+  - net-sniffer
+  command: npx
+  env: {}
+  name: Network Sniffer
+- args:
+  - -y
+  - docker-inspect-agent
+  command: npx
+  env: {}
+  name: Docker Inspector
+name: Essential MCP Servers
+schema: v1
+version: 1.0.0

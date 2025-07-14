@@ -8,91 +8,58 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-public class UserDto {
-    
-    private Long id;
+/**
+ * Data Transfer Object for User entity using Java 24 record pattern matching.
+ * Demonstrates modern Java features while maintaining backward compatibility.
+ */
+public record UserDto(
+    Long id,
     
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    private String username;
+    String username,
     
     @Email(message = "Email must be valid")
     @NotBlank(message = "Email is required")
-    private String email;
+    String email,
     
-    private String avatarUrl;
-    private String provider;
-    private Set<User.Role> roles;
-    private LocalDateTime createdAt;
+    String avatarUrl,
+    String provider,
+    Set<User.Role> roles,
+    LocalDateTime createdAt
+) {
     
-    // Constructors
-    public UserDto() {}
-    
-    public UserDto(Long id, String username, String email, String avatarUrl, 
-                   String provider, Set<User.Role> roles, LocalDateTime createdAt) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.avatarUrl = avatarUrl;
-        this.provider = provider;
-        this.roles = roles;
-        this.createdAt = createdAt;
+    /**
+     * Factory method demonstrating Java 24 pattern matching with records
+     */
+    public static UserDto fromUser(User user) {
+        return switch (user) {
+            case User u when u.getId() != null -> new UserDto(
+                u.getId(),
+                u.getUsername(),
+                u.getEmail(),
+                u.getAvatarUrl(),
+                u.getProvider(),
+                u.getRoles(),
+                u.getCreatedAt()
+            );
+            case null -> throw new IllegalArgumentException("User cannot be null");
+            default -> throw new IllegalStateException("Invalid user state");
+        };
     }
     
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-    
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
-    public String getUsername() {
-        return username;
-    }
-    
-    public void setUsername(String username) {
-        this.username = username;
-    }
-    
-    public String getEmail() {
-        return email;
-    }
-    
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-    
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-    
-    public String getProvider() {
-        return provider;
-    }
-    
-    public void setProvider(String provider) {
-        this.provider = provider;
-    }
-    
-    public Set<User.Role> getRoles() {
-        return roles;
-    }
-    
-    public void setRoles(Set<User.Role> roles) {
-        this.roles = roles;
-    }
-    
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    /**
+     * Compact constructor with validation using Java 24 features
+     */
+    public UserDto {
+        if (id != null && id <= 0) {
+            throw new IllegalArgumentException("User ID must be positive");
+        }
+        if (username != null && username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        if (email != null && !email.contains("@")) {
+            throw new IllegalArgumentException("Email must be valid");
+        }
     }
 }

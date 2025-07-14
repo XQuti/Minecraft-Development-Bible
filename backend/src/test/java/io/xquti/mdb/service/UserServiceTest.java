@@ -4,6 +4,7 @@ import io.xquti.mdb.dto.UserDto;
 import io.xquti.mdb.exception.EntityNotFoundException;
 import io.xquti.mdb.model.User;
 import io.xquti.mdb.repository.UserRepository;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,12 +43,15 @@ class UserServiceTest {
         testUser.setProvider("local");
         testUser.setCreatedAt(LocalDateTime.now());
 
-        testUserDto = new UserDto();
-        testUserDto.setId(1L);
-        testUserDto.setEmail("test@example.com");
-        testUserDto.setUsername("testuser");
-        testUserDto.setProvider("local");
-        testUserDto.setCreatedAt(LocalDateTime.now());
+        testUserDto = new UserDto(
+            1L,
+            "testuser",
+            "test@example.com",
+            null,
+            "local",
+            Set.of(User.Role.USER),
+            LocalDateTime.now()
+        );
     }
 
     @Test
@@ -91,7 +95,7 @@ class UserServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(testUserDto.getEmail(), result.getEmail());
+        assertEquals(testUserDto.email(), result.email());
         verify(userRepository).findByEmail(email);
         verify(dtoMapper).toUserDto(testUser);
     }

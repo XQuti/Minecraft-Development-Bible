@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Suppress magic number checks for test files -->
+    <suppress checks="MagicNumber" files=".*Test\.java"/>
+    
+    <!-- Suppress design for extension in configuration classes -->
+    <suppress checks="DesignForExtension" files=".*Config\.java"/>
+    
+    <!-- Suppress final parameters in Spring Boot main class -->
+    <suppress checks="FinalParameters" files="MdbApplication\.java"/>
+    
+    <!-- Suppress line length for long URLs and imports -->
+    <suppress checks="LineLength" files=".*" lines="1-20"/>
+    
+    <!-- Suppress unused imports in generated code -->
+    <suppress checks="UnusedImports" files=".*Application\.java"/>
+    
+    <!-- Allow longer lines in configuration files -->
+    <suppress checks="LineLength" files=".*Config\.java"/>
+    
+    <!-- Suppress checkstyle for DTOs and entities -->
+    <suppress checks="FinalParameters" files=".*dto.*"/>
+    <suppress checks="FinalParameters" files=".*model.*"/>
+    
+    <!-- Suppress design for extension in service classes -->
+    <suppress checks="DesignForExtension" files=".*Service\.java"/>
+    
+    <!-- Suppress magic numbers in security configuration -->
+    <suppress checks="MagicNumber" files="SecurityConfig\.java"/>
+    <suppress checks="MagicNumber" files="RateLimitConfig\.java"/>
+</suppressions>

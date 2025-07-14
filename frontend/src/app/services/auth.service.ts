@@ -18,19 +18,23 @@ export interface ApiError {
 })
 export class AuthService {
   private readonly API_URL = 'http://localhost:8080/api';
-  private readonly TOKEN_KEY = 'auth_token';
   private readonly REQUEST_TIMEOUT = 10000; // 10 seconds
   
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  
+  // Store token in memory instead of localStorage for security
+  private authToken: string | null = null;
 
   constructor(private http: HttpClient) {
     this.loadUserFromToken();
   }
 
   private loadUserFromToken(): void {
-    const token = this.getToken();
+    // Try to get token from cookie on page load
+    const token = this.getTokenFromCookie();
     if (token) {
+      this.authToken = token;
       this.getCurrentUser().subscribe({
         error: (error) => {
           console.warn('Failed to load user from stored token:', error);
@@ -40,8 +44,24 @@ export class AuthService {
     }
   }
 
+  private getTokenFromCookie(): string | null {
+    const name = 'auth_token=';
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return null;
+  }
+
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return this.authToken;
   }
 
   setToken(token: string): void {
@@ -49,11 +69,13 @@ export class AuthService {
       console.error('Attempted to set empty or invalid token');
       return;
     }
-    localStorage.setItem(this.TOKEN_KEY, token);
+    this.authToken = token;
   }
 
   removeToken(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
+    this.authToken = null;
+    // Clear the cookie by setting it to expire
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   }
 
   isAuthenticated(): boolean {
@@ -83,7 +105,7 @@ export class AuthService {
         // Handle different error scenarios
         if (error.status === 401 || error.status === 403) {
           console.warn('Authentication failed, logging out user');
-          this.logout();
+          this.logout().subscribe(); // Subscribe to ensure logout completes
         } else if (error.status === 0) {
           console.error('Network error - server may be unavailable');
         } else {
@@ -101,6 +123,10 @@ export class AuthService {
       return;
     }
     
+    this.redirectToOAuth(provider);
+  }
+
+  private redirectToOAuth(provider: string): void {
     try {
       window.location.href = `${this.API_URL.replace('/api', '')}/oauth2/authorization/${provider}`;
     } catch (error) {
@@ -108,13 +134,8 @@ export class AuthService {
     }
   }
 
-  handleAuthCallback(token: string): void {
-    if (!token || token.trim() === '') {
-      console.error('Invalid token received in auth callback');
-      return;
-    }
-    
-    this.setToken(token);
+  handleAuthCallback(): void {
+    // Token is now in cookie, just load user
     this.getCurrentUser().subscribe({
       next: (user) => {
         if (user) {
@@ -123,12 +144,12 @@ export class AuthService {
       },
       error: (error) => {
         console.error('Failed to fetch user after auth callback:', error);
-        this.logout();
+        this.logout().subscribe();
       }
     });
   }
 
-  logout(): Observable<any> {
+  logout(): Observable<{ message: string }> {
     const token = this.getToken();
     
     // Clear local state immediately
@@ -138,7 +159,7 @@ export class AuthService {
     // Notify server if token exists
     if (token) {
       const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-      return this.http.post(`${this.API_URL}/auth/logout`, {}, { headers }).pipe(
+      return this.http.post<{ message: string }>(`${this.API_URL}/auth/logout`, {}, { headers }).pipe(
         timeout(this.REQUEST_TIMEOUT),
         catchError((error: HttpErrorResponse) => {
           console.warn('Error during server logout:', error);

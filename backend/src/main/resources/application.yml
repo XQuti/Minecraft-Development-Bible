@@ -26,34 +26,79 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms
+    
+    elasticsearch:
+      repositories:
+        enabled: true
+  
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+    connection-timeout: 10s
+    socket-timeout: 60s
   
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:dummy-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-google-client-secret}
             scope:
               - email
               - profile
           github:
-            client-id: ${GITHUB_CLIENT_ID}
-            client-secret: ${GITHUB_CLIENT_SECRET}
+            client-id: ${GITHUB_CLIENT_ID:dummy-github-client-id}
+            client-secret: ${GITHUB_CLIENT_SECRET:dummy-github-client-secret}
             scope:
               - user:email
               - read:user
 
-# JWT Configuration
+# Elasticsearch Configuration
+elasticsearch:
+  uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+  username: ${ELASTICSEARCH_USERNAME:}
+  password: ${ELASTICSEARCH_PASSWORD:}
+  connection-timeout: 10s
+  socket-timeout: 60s
+
+# JWT Configuration - CRITICAL SECURITY: Must use cryptographically secure secret
 jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+  secret: ${JWT_SECRET:}  # REQUIRED: Must be set via environment variable - no default for security
+  expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds (reduced from 24h for security)
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days for refresh tokens
+  issuer: ${JWT_ISSUER:mdb-platform}
+  audience: ${JWT_AUDIENCE:mdb-users}
+
+# Application OAuth2 Configuration
+app:
+  oauth2:
+    authorized-redirect-uris: ${FRONTEND_URL:http://localhost:4200}/auth/callback,${FRONTEND_URL:http://localhost:4200}/login
 
 # Logging
 logging:
   level:
-    io.xquti.mdb: DEBUG
+    io.xquti.mdb: ${LOG_LEVEL:INFO}
     org.springframework.security: INFO
     org.springframework.web: INFO
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.boot.actuate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true

@@ -24,7 +24,6 @@ export class AuthCallbackComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      const token = params['token'];
       const error = params['error'];
 
       if (error) {
@@ -33,13 +32,9 @@ export class AuthCallbackComponent implements OnInit {
         return;
       }
 
-      if (token) {
-        this.authService.handleAuthCallback(token);
-        this.router.navigate(['/']);
-      } else {
-        console.error('No token received in callback');
-        this.router.navigate(['/'], { queryParams: { error: 'no_token' } });
-      }
+      // Token is now in cookie, no need to extract from URL
+      this.authService.handleAuthCallback();
+      this.router.navigate(['/']);
     });
   }
 }

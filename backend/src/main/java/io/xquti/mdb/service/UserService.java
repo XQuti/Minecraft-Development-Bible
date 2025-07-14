@@ -88,9 +88,9 @@ public class UserService {
             .orElseThrow(() -> new EntityNotFoundException("User", id));
         
         // Update allowed fields
-        existingUser.setUsername(userDto.getUsername());
-        existingUser.setEmail(userDto.getEmail());
-        existingUser.setAvatarUrl(userDto.getAvatarUrl());
+        existingUser.setUsername(userDto.username());
+        existingUser.setEmail(userDto.email());
+        existingUser.setAvatarUrl(userDto.avatarUrl());
         
         User savedUser = save(existingUser);
         logger.info("Successfully updated user: {}", savedUser.getId());

@@ -3,6 +3,8 @@ import { of } from 'rxjs';
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
@@ -27,15 +29,27 @@ describe('NavbarComponent', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [NavbarComponent],
+      imports: [NavbarComponent, RouterTestingModule],
       providers: [
-        { provide: AuthService, useValue: authServiceSpy }
+        { provide: AuthService, useValue: authServiceSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { params: {} },
+            params: of({}),
+            queryParams: of({})
+          }
+        }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(NavbarComponent);
     component = fixture.componentInstance;
     mockAuthService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+    
+    // Setup spy return values
+    mockAuthService.logout.and.returnValue(of({ message: 'Logged out successfully' }));
+    mockAuthService.login.and.returnValue(undefined);
   });
 
   it('should create', () => {

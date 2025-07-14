@@ -10,6 +10,8 @@ import io.xquti.mdb.model.User;
 import io.xquti.mdb.repository.ForumPostRepository;
 import io.xquti.mdb.repository.ForumThreadRepository;
 import io.xquti.mdb.repository.UserRepository;
+import io.xquti.mdb.search.SearchService;
+import io.xquti.mdb.websocket.ForumWebSocketController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Gatherers;
 
 @Service
 @Transactional
@@ -37,6 +41,12 @@ public class ForumService {
     
     @Autowired
     private DtoMapper dtoMapper;
+    
+    @Autowired
+    private SearchService searchService;
+    
+    @Autowired
+    private ForumWebSocketController webSocketController;
     
     // Thread operations
     public Page<ForumThreadDto> getAllThreads(Pageable pageable, String category) {
@@ -66,8 +76,36 @@ public class ForumService {
     
     public List<ForumThreadDto> searchThreads(String keyword) {
         logger.debug("Searching forum threads with keyword: {}", keyword);
-        List<ForumThread> threads = forumThreadRepository.findByTitleContainingOrContentContaining(keyword);
-        return dtoMapper.toForumThreadDtoList(threads);
+        
+        // SECURITY: Sanitize search keyword and add pagination to prevent DoS
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // SECURITY: Escape special characters and limit length
+        String sanitizedKeyword = keyword.trim();
+        if (sanitizedKeyword.length() > 100) {
+            sanitizedKeyword = sanitizedKeyword.substring(0, 100);
+        }
+        
+        // SECURITY: Add % wildcards safely and use pagination
+        String searchPattern = "%" + sanitizedKeyword.replace("%", "\\%").replace("_", "\\_") + "%";
+        
+        org.springframework.data.domain.Pageable pageable = 
+            org.springframework.data.domain.PageRequest.of(0, 50); // Limit to 50 results
+        
+        org.springframework.data.domain.Page<ForumThread> threadsPage = 
+            forumThreadRepository.findByTitleContainingOrContentContaining(searchPattern, pageable);
+        
+        // Java 24 Stream Gatherers: Group threads by category and collect top results
+        return threadsPage.getContent().stream()
+            .gather(Gatherers.windowFixed(10)) // Process in windows of 10
+            .flatMap(window -> window.stream()
+                .sorted((t1, t2) -> t2.getUpdatedAt().compareTo(t1.getUpdatedAt()))
+                .limit(5) // Top 5 from each window
+            )
+            .map(dtoMapper::toForumThreadDto)
+            .toList();
     }
     
     public ForumThreadDto createThread(String title, String content, Long userId) {
@@ -84,7 +122,22 @@ public class ForumService {
         ForumThread savedThread = forumThreadRepository.save(thread);
         logger.info("Successfully created forum thread: {}", savedThread.getId());
         
-        return dtoMapper.toForumThreadDto(savedThread);
+        // Index thread for search
+        try {
+            searchService.indexThread(savedThread);
+        } catch (Exception e) {
+            logger.warn("Failed to index thread for search: {}", e.getMessage());
+        }
+        
+        // Broadcast new thread via WebSocket
+        ForumThreadDto threadDto = dtoMapper.toForumThreadDto(savedThread);
+        try {
+            webSocketController.broadcastNewThread(threadDto);
+        } catch (Exception e) {
+            logger.warn("Failed to broadcast new thread via WebSocket: {}", e.getMessage());
+        }
+        
+        return threadDto;
     }
     
     public ForumThreadDto updateThread(Long id, ForumThreadDto threadDto, String userEmail) {
@@ -162,7 +215,22 @@ public class ForumService {
         
         logger.info("Successfully created forum post: {}", savedPost.getId());
         
-        return dtoMapper.toForumPostDto(savedPost);
+        // Index post for search
+        try {
+            searchService.indexPost(savedPost);
+        } catch (Exception e) {
+            logger.warn("Failed to index post for search: {}", e.getMessage());
+        }
+        
+        // Broadcast new post via WebSocket
+        ForumPostDto postDto = dtoMapper.toForumPostDto(savedPost);
+        try {
+            webSocketController.broadcastNewPost(postDto);
+        } catch (Exception e) {
+            logger.warn("Failed to broadcast new post via WebSocket: {}", e.getMessage());
+        }
+        
+        return postDto;
     }
     
     public ForumPostDto updatePost(Long postId, ForumPostDto postDto, String userEmail) {

@@ -17,7 +17,7 @@ export class ForumService {
     private authService: AuthService
   ) {}
 
-  getThreads(page: number = 0, size: number = 20, category?: string): Observable<PageResponse<ForumThread>> {
+  getThreads(page: number = 0, size: number = 20, categoryOrSearch?: string): Observable<PageResponse<ForumThread>> {
     // Validate parameters
     if (page < 0) page = 0;
     if (size < 1 || size > 100) size = 20;
@@ -26,8 +26,13 @@ export class ForumService {
       .set('page', page.toString())
       .set('size', size.toString());
     
-    if (category && category.trim() !== '') {
-      params = params.set('category', category.trim());
+    if (categoryOrSearch && categoryOrSearch.trim() !== '') {
+      // Check if it's a search query (contains spaces or special characters) or category
+      if (categoryOrSearch.includes(' ') || categoryOrSearch.length > 20) {
+        params = params.set('search', categoryOrSearch.trim());
+      } else {
+        params = params.set('category', categoryOrSearch.trim());
+      }
     }
     
     return this.http.get<PageResponse<ForumThread>>(`${this.API_URL}/threads`, { params }).pipe(

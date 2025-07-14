@@ -4,7 +4,7 @@ A modern Angular web application for the Minecraft Development Bible platform, p
 
 ## Technologies Used
 
-- **Angular 20.1.0** - Modern web application framework
+- **Angular 19.2.14** - Modern web application framework
 - **TypeScript** - Type-safe JavaScript development
 - **Tailwind CSS** - Utility-first CSS framework
 - **RxJS** - Reactive programming with observables
@@ -18,8 +18,8 @@ A modern Angular web application for the Minecraft Development Bible platform, p
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- Angular CLI 20.1.0 or higher
+- Bun 1.2.18+ (not npm/yarn)
+- Angular CLI 19.2.15 or higher
 - Backend API running on `http://localhost:8080`
 
 ### Local Development Setup
@@ -32,7 +32,7 @@ A modern Angular web application for the Minecraft Development Bible platform, p
 
 2. **Install dependencies**
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Configure environment**
@@ -47,7 +47,7 @@ A modern Angular web application for the Minecraft Development Bible platform, p
 
 4. **Start the development server**
    ```bash
-   ng serve
+   bun start
    ```
 
 The application will be available at `http://localhost:4200/`
@@ -56,13 +56,13 @@ The application will be available at `http://localhost:4200/`
 
 1. **Build the application**
    ```bash
-   ng build --configuration production
+   bun run build:prod
    ```
 
 2. **Serve the built application**
    ```bash
    # Using a simple HTTP server
-   npx http-server dist/minecraft-dev-bible-frontend
+   bun dlx http-server dist/mdb-frontend
    ```
 
 ## Testing
@@ -75,13 +75,13 @@ The application will be available at `http://localhost:4200/`
 
 ```bash
 # Attempt to run tests (currently failing due to TypeScript compilation errors)
-ng test
+bun test
 
 # Run tests without watch mode
-ng test --watch=false
+bun run test:ci
 
 # Build application (works successfully)
-ng build --configuration production
+bun run build:prod
 ```
 
 ### Test Structure
@@ -311,7 +311,7 @@ Global styles are defined in `src/styles.css`:
    - Ensure proper token storage and retrieval
 
 3. **Build Errors**
-   - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+   - Clear node_modules and reinstall: `rm -rf node_modules && bun install`
    - Check TypeScript version compatibility
    - Verify Angular CLI version
 
